@@ -1,30 +1,38 @@
+# Containerize the go application that we have created
+# This is the Dockerfile that we will use to build the image
+# and run the container
 
-# First stage: Build Go application
-FROM golang:1.22.5 as base
+# Start with a base image
+FROM golang:1.21 as base
 
+# Set the working directory inside the container
 WORKDIR /app
 
-COPY go.mod . 
+# Copy the go.mod and go.sum files to the working directory
+COPY go.mod ./
+
+# Download all the dependencies
 RUN go mod download
 
+# Copy the source code to the working directory
 COPY . .
+
+# Build the application
 RUN go build -o main .
 
-# Final stage: Use NGINX and distroless
-FROM nginx:alpine as nginx
-
-# Copy NGINX configuration
-RUN rm -rf /usr/share/nginx/html/*
-
-# Use distroless for the application
+#######################################################
+# Reduce the image size using multi-stage builds
+# We will use a distroless image to run the application
 FROM gcr.io/distroless/base
 
-# Copy static files and binary from the Go build stage
-COPY --from=base /app/main /main
-COPY --from=base /app/static /static
+# Copy the binary from the previous stage
+COPY --from=base /app/main .
 
-# Expose the necessary ports
+# Copy the static files from the previous stage
+COPY --from=base /app/static ./static
+
+# Expose the port on which the application will run
 EXPOSE 8080
 
-# Run the Go application and NGINX
+# Command to run the application
 CMD ["./main"]
