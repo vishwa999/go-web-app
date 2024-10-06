@@ -14,7 +14,7 @@ RUN go build -o main .
 FROM nginx:alpine as nginx
 
 # Copy NGINX configuration
-COPY nginx.conf /etc/nginx/nginx.conf
+RUN rm -rf /usr/share/nginx/html/*
 
 # Use distroless for the application
 FROM gcr.io/distroless/base
